@@ -69,7 +69,7 @@ import { onMounted, ref } from 'vue';
     
   }
 
-  function ClearPixelArray(p_pixelArray : i_canvasPixel[])
+  function ClearPixelArray()
   {
     let CleanPixelArray = [];
       for(let y = 0; y < rowSize; y++)
@@ -84,8 +84,8 @@ import { onMounted, ref } from 'vue';
             CleanPixelArray[(y * rowSize) + x] = CurrentPixel;
         }
       }
-    
-      p_pixelArray = CleanPixelArray;
+      console.log("cleared canvas")
+      pixelArray.value = CleanPixelArray;
   }
 
   onMounted(() => { LoadPixelArray() });
@@ -97,7 +97,7 @@ import { onMounted, ref } from 'vue';
 <template>
   <div style="display:flex; width:100%; flex-direction: row; justify-content: space-evenly;">
       <input type="color" v-model="selectedPixelColor"/>
-      <div @click="ClearPixelArray(pixelArray)" class="clear-button"> CLEAR CANVAS </div>
+      <div @click="ClearPixelArray()" class="clear-button"> CLEAR CANVAS </div>
       <div @click="PaintPixel()" class="clear-button"> paint PIXEL </div>
       <div >
         <p>selected pixel info</p>
