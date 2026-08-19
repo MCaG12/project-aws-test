@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 
+  interface i_coords
+  {
+    i_xCord: number;
+    i_yCord: number; 
+  }
 
   interface i_canvasPixel 
   {
@@ -9,9 +14,12 @@ import { onMounted, ref } from 'vue';
     s_pixelColor : string;
   }
 
-  const selectedPixelColor = ref<string>('');
+  const selectedPixelCoordinates = ref<i_coords>();
+
+  const selectedPixelColor = ref<string>('#ff0000');
   const pixelArray = ref<i_canvasPixel[]>([]);
   const rowSize = 32; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
+  const pixelArraySize = rowSize * rowSize;
 
   function LoadPixelArray()
   {
@@ -32,12 +40,36 @@ import { onMounted, ref } from 'vue';
       pixelArray.value = PixelArray;
   } 
 
-  function PaintPixel(pixel : i_canvasPixel)
+  function SelectPixel(p_i_xCoord: number, p_i_yCoord: number)
   {
-    pixel.s_pixelColor = '#FF0000'
+    let newPixelCordinates :i_coords = {
+      i_xCord : p_i_xCoord,
+      i_yCord : p_i_yCoord
+    }
+    selectedPixelCoordinates.value = newPixelCordinates;
   }
 
-  function ClearPixelArray(pixelArray : i_canvasPixel[])
+  function PaintPixel()
+  {
+    if(selectedPixelCoordinates.value?.i_xCord != null && selectedPixelCoordinates.value?.i_yCord != null)
+    {
+      const index = (selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord;
+      if(index > pixelArraySize){
+        return;
+      }
+      
+      const selectedPixel :i_canvasPixel = pixelArray.value[(selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord];
+      
+      selectedPixel.s_pixelColor =  selectedPixelColor.value;
+    }
+    else
+    {
+      console.error("pixel coordinates not selected!")
+    }
+    
+  }
+
+  function ClearPixelArray(p_pixelArray : i_canvasPixel[])
   {
     let CleanPixelArray = [];
       for(let y = 0; y < rowSize; y++)
@@ -53,18 +85,25 @@ import { onMounted, ref } from 'vue';
         }
       }
     
-      pixelArray = CleanPixelArray;
+      p_pixelArray = CleanPixelArray;
   }
 
   onMounted(() => { LoadPixelArray() });
+  onMounted((selectedPixelColor: string) => { console.log("selected pixel color changed " + selectedPixelColor)});
 
 
 </script>
 
 <template>
-  <div>
+  <div style="display:flex; width:100%; flex-direction: row; justify-content: space-evenly;">
       <input type="color" v-model="selectedPixelColor"/>
       <div @click="ClearPixelArray(pixelArray)" class="clear-button"> CLEAR CANVAS </div>
+      <div @click="PaintPixel()" class="clear-button"> paint PIXEL </div>
+      <div >
+        <p>selected pixel info</p>
+        <p>pixel X coordinate: {{ selectedPixelCoordinates?.i_xCord }}</p>
+        <p>pixel Y coordinate: {{ selectedPixelCoordinates?.i_yCord }}</p>
+      </div>
   </div>
   <h1>You did it! test</h1>
   <div class="square-grid">
@@ -72,8 +111,10 @@ import { onMounted, ref } from 'vue';
       v-for="(pixel, index) in pixelArray" 
       :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
       class="pixel" 
-      :style="{ backgroundColor: pixel.s_pixelColor }" 
-      @mouseenter="PaintPixel(pixel)"
+      :style="{  backgroundColor: pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord
+                  ? '#b3b3b3': pixel.s_pixelColor}" 
+
+      @click="SelectPixel(pixel.i_xPos, pixel.i_yPos)"
     ></div>
   </div>
 </template>
