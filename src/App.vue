@@ -32,9 +32,28 @@ import { onMounted, ref } from 'vue';
       pixelArray.value = PixelArray;
   } 
 
-  function paintPixel(pixel : i_canvasPixel)
+  function PaintPixel(pixel : i_canvasPixel)
   {
     pixel.s_pixelColor = '#FF0000'
+  }
+
+  function ClearPixelArray(pixelArray : i_canvasPixel[])
+  {
+    let CleanPixelArray = [];
+      for(let y = 0; y < rowSize; y++)
+      {
+        for(let x = 0; x < rowSize; x++)
+        {
+            let CurrentPixel: i_canvasPixel = {
+              i_xPos: x,
+              i_yPos: y,
+              s_pixelColor: '#ffffff',
+            }
+            CleanPixelArray[(y * rowSize) + x] = CurrentPixel;
+        }
+      }
+    
+      pixelArray = CleanPixelArray;
   }
 
   onMounted(() => { LoadPixelArray() });
@@ -45,6 +64,7 @@ import { onMounted, ref } from 'vue';
 <template>
   <div>
       <input type="color" v-model="selectedPixelColor"/>
+      <div @click="ClearPixelArray(pixelArray)" class="clear-button"> CLEAR CANVAS </div>
   </div>
   <h1>You did it! test</h1>
   <div class="square-grid">
@@ -53,7 +73,7 @@ import { onMounted, ref } from 'vue';
       :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
       class="pixel" 
       :style="{ backgroundColor: pixel.s_pixelColor }" 
-      @mouseenter="paintPixel(pixel)"
+      @mouseenter="PaintPixel(pixel)"
     ></div>
   </div>
 </template>
@@ -79,4 +99,17 @@ import { onMounted, ref } from 'vue';
     cursor: pointer;
     filter: brightness(0.5);
   }
+
+  .clear-button
+  {
+    width: 100px; 
+    height: 20px; 
+    background-color: aqua;
+  }
+
+  .clear-button:hover
+  {
+    cursor:pointer;
+  }
+
 </style>
