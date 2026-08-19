@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 
   interface i_canvasPixel 
@@ -15,9 +15,29 @@ import { ref } from 'vue';
 
   function LoadPixelArray()
   {
-
+      let PixelArray = [];
+      for(let y = 0; y < rowSize; y++)
+      {
+        for(let x = 0; x < rowSize; x++)
+        {
+            let CurrentPixel: i_canvasPixel = {
+              i_xPos: x,
+              i_yPos: y,
+              s_pixelColor: '#ffffff',
+            }
+            PixelArray[(y * rowSize) + x] = CurrentPixel;
+        }
+      }
+    
+      pixelArray.value = PixelArray;
   } 
 
+  function paintPixel(pixel : i_canvasPixel)
+  {
+    pixel.s_pixelColor = '#FF0000'
+  }
+
+  onMounted(() => { LoadPixelArray() });
 
 
 </script>
@@ -27,10 +47,36 @@ import { ref } from 'vue';
       <input type="color" v-model="selectedPixelColor"/>
   </div>
   <h1>You did it! test</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div class="square-grid">
+    <div 
+      v-for="(pixel, index) in pixelArray" 
+      :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
+      class="pixel" 
+      :style="{ backgroundColor: pixel.s_pixelColor }" 
+      @mouseenter="paintPixel(pixel)"
+    ></div>
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+  .square-grid {
+    display: grid;
+    grid-template-columns: repeat(32, 50px);
+    grid-auto-rows: 50px;
+
+    background-color: #e0e0e0;
+    width: 100%;
+  }
+
+  .pixel {
+    box-sizing: border-box;
+    width: 100%;          
+    height: 100%;          
+    border: 2px solid #535353;
+  }
+
+  .pixel:hover {
+    cursor: pointer;
+    filter: brightness(0.5);
+  }
+</style>
