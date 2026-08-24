@@ -21,25 +21,6 @@ import { onMounted, ref } from 'vue';
   const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
   const pixelArraySize = rowSize * rowSize;
 
-  function LoadPixelArray()
-  {
-      let PixelArray = [];
-      for(let y = 0; y < rowSize; y++)
-      {
-        for(let x = 0; x < rowSize; x++)
-        {
-            let CurrentPixel: i_canvasPixel = {
-              i_xPos: x,
-              i_yPos: y,
-              s_pixelColor: '#ffffff',
-            }
-            PixelArray[(y * rowSize) + x] = CurrentPixel;
-        }
-      }
-    
-      pixelArray.value = PixelArray;
-  } 
-
   function SelectPixel(p_i_xCoord: number, p_i_yCoord: number)
   {
     let newPixelCordinates :i_coords = {
@@ -49,18 +30,19 @@ import { onMounted, ref } from 'vue';
     selectedPixelCoordinates.value = newPixelCordinates;
   }
 
-  function PaintPixel()
+  function PaintPixel(p_Pixel: i_canvasPixel)
   {
-    if(selectedPixelCoordinates.value?.i_xCord != null && selectedPixelCoordinates.value?.i_yCord != null)
+    if(p_Pixel.i_xPos != null && p_Pixel.i_yPos != null)
     {
-      const index = (selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord;
-      if(index > pixelArraySize){
+      const index = (p_Pixel.i_yPos * rowSize) + p_Pixel.i_xPos;
+      if(index > pixelArraySize && index < 0){
         return;
       }
+
+      pixelArray.value[index] = p_Pixel;
+
+      console.log("updated pixel: " , p_Pixel);
       
-      const selectedPixel :i_canvasPixel = pixelArray.value[(selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord];
-      
-      selectedPixel.s_pixelColor =  selectedPixelColor.value;
     }
     else
     {
@@ -108,7 +90,59 @@ import { onMounted, ref } from 'vue';
     }
   }
 
+  async function UpdatePixel()
+  {
+    try 
+    {
+      const url = 'http://localhost:3000/update-pixel';
+
+      const response = await fetch(url, {
+        method: 'POST', // Specify the HTTP method
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(
+          {
+            "X": selectedPixelCoordinates.value?.i_xCord,
+            "Y": selectedPixelCoordinates.value?.i_yCord,
+            "Color": selectedPixelColor.value
+          }
+        )
+      });
+
+      if(selectedPixelCoordinates.value?.i_xCord != null && selectedPixelCoordinates.value?.i_yCord != null)
+      {
+        const pixel :i_canvasPixel = 
+        {
+            i_xPos: selectedPixelCoordinates.value?.i_xCord,
+            i_yPos: selectedPixelCoordinates.value?.i_yCord,
+            s_pixelColor: selectedPixelColor.value,
+        }
+
+        PaintPixel(pixel);
+      }
+    } 
+
+    catch (error) 
+    {
+      console.error('Error:', error);
+    }
+
+  }
+
   onMounted(() => { GetCanvasState() });
+
+  onMounted(() => { 
+    const eventSource = new EventSource('http://localhost:3000/events');
+    eventSource.onmessage = async (event: MessageEvent) => {
+    console.log(event.data);
+    const pixel: i_canvasPixel = JSON.parse(event.data);
+
+
+    PaintPixel(pixel);
+   
+    }
+  });
 
   onMounted((selectedPixelColor: string) => { console.log("selected pixel color changed " + selectedPixelColor)});
 
@@ -169,7 +203,7 @@ import { onMounted, ref } from 'vue';
       <div :style="{ display: 'flex', flexDirection: 'column', width: '20%', alignItems:'center', justifyContent: 'center'}">
 
         <div @click="ClearPixelArray()" class="paint-pixel-button"> CLEAR CANVAS </div>
-        <div @click="PaintPixel()" class="paint-pixel-button"> paint PIXEL </div>
+        <div @click="UpdatePixel()" class="paint-pixel-button"> paint PIXEL </div>
 
       </div>
 
