@@ -88,7 +88,28 @@ import { onMounted, ref } from 'vue';
       pixelArray.value = CleanPixelArray;
   }
 
-  onMounted(() => { LoadPixelArray() });
+  async function GetCanvasState() 
+  {
+    const url = 'http://localhost:3000/initalize-canvas';
+
+    try 
+    {
+      const response = await fetch(url);
+      
+      const data = await response.json();
+
+      pixelArray.value = data.currentCanvas;
+
+      console.log("Canvas Loaded Sucefully"); 
+    } 
+    catch (error) 
+    {
+      console.error('Fetch error:', error);
+    }
+  }
+
+  onMounted(() => { GetCanvasState() });
+
   onMounted((selectedPixelColor: string) => { console.log("selected pixel color changed " + selectedPixelColor)});
 
   const zoom = ref(1);
