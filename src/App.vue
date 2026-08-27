@@ -1,20 +1,20 @@
 <script setup lang="ts">
-  import { onMounted, ref } from 'vue';
+  import { onMounted, ref, watch } from 'vue';
   import type i_canvasPixel from './interfaces/i_canvasPixel';
   import GetCanvasState from './AuxFunctions/getCanvasState';
   import PaintPixel from './AuxFunctions/paintPixel';
-import DisplayMessage from './AuxFunctions/displayMessage';
-import type i_coordinatesPixel from './interfaces/i_coordinatesPixel';
-import UpdatePixel from './AuxFunctions/updatePixel';
+  import type i_coordinatesPixel from './interfaces/i_coordinatesPixel';
+  import UpdatePixel from './AuxFunctions/updatePixel';
  
   const displayMessageTimeMilliSeconds = 5000; 
+  const maxPickedColorsArraySize = 6;
 
   const selectedPixelCoordinates = ref<i_coordinatesPixel>({i_xCord : 0, i_yCord: 0});
 
   const selectedPixelColor = ref<string>('#ff0000');
   const pixelArray = ref<i_canvasPixel[]>([]);
   const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
-  const pixelArraySize = rowSize * rowSize;
+  const lastUsedColors = ref<string[]>([]);
 
   const ToggleMessage = ref<boolean>(false)
   const MessageText = ref<string>("");
@@ -60,7 +60,19 @@ import UpdatePixel from './AuxFunctions/updatePixel';
     }
   });
 
-  onMounted((selectedPixelColor: string) => { console.log("selected pixel color changed " + selectedPixelColor)});
+  watch(selectedPixelColor, (newColor) => {
+   console.log("selected pixel color changed: " + newColor);
+
+    const isColorAlreadyUsed = lastUsedColors.value.includes(newColor);
+
+    if (!isColorAlreadyUsed) {
+      lastUsedColors.value.push(newColor);
+
+      if (lastUsedColors.value.length > maxPickedColorsArraySize) {
+        lastUsedColors.value.shift(); 
+      }
+    }
+  });
 
   const zoom = ref(1);
   const containerRef = ref(null);
@@ -113,6 +125,15 @@ import UpdatePixel from './AuxFunctions/updatePixel';
         <span class="header-title">SELECTED COLOR</span>
         <input type="color" v-model="selectedPixelColor"/>
         <span class="header-title">LAST PICKED COLORS</span>
+        <div style="display: flex; flex-direction: row;">
+          <div 
+            v-for="color in lastUsedColors" 
+            :key="color"
+            :style="{ backgroundColor: color}"
+            style="border: 1px solid #000000; width: 50px; height: 50px;"
+          ></div>
+        </div>
+
       </div>
 
       <!-- /**button for the paint pixel */ -->
@@ -122,7 +143,8 @@ import UpdatePixel from './AuxFunctions/updatePixel';
         <div 
           @click="UpdatePixel(selectedPixelCoordinates, selectedPixelColor, pixelArray, ToggleMessage, MessageText)" 
           class="paint-pixel-button"> 
-          paint PIXEL </div>
+          paint PIXEL 
+        </div>
 
       </div>
 
