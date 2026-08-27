@@ -1,54 +1,31 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+  import { onMounted, ref } from 'vue';
+  import type i_canvasPixel from './interfaces/i_canvasPixel';
+  import GetCanvasState from './AuxFunctions/getCanvasState';
+  import PaintPixel from './AuxFunctions/paintPixel';
+import DisplayMessage from './AuxFunctions/displayMessage';
+import type i_coordinatesPixel from './interfaces/i_coordinatesPixel';
+import UpdatePixel from './AuxFunctions/updatePixel';
+ 
+  const displayMessageTimeMilliSeconds = 5000; 
 
-  interface i_coords
-  {
-    i_xCord: number;
-    i_yCord: number; 
-  }
-
-  interface i_canvasPixel 
-  {
-    i_xPos : number;
-    i_yPos : number;
-    s_pixelColor : string;
-  }
-
-  const selectedPixelCoordinates = ref<i_coords>();
+  const selectedPixelCoordinates = ref<i_coordinatesPixel>({i_xCord : 0, i_yCord: 0});
 
   const selectedPixelColor = ref<string>('#ff0000');
   const pixelArray = ref<i_canvasPixel[]>([]);
   const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
   const pixelArraySize = rowSize * rowSize;
 
+  const ToggleMessage = ref<boolean>(false)
+  const MessageText = ref<string>("");
+
   function SelectPixel(p_i_xCoord: number, p_i_yCoord: number)
   {
-    let newPixelCordinates :i_coords = {
+    let newPixelCordinates :i_coordinatesPixel = {
       i_xCord : p_i_xCoord,
       i_yCord : p_i_yCoord
     }
     selectedPixelCoordinates.value = newPixelCordinates;
-  }
-
-  function PaintPixel(p_Pixel: i_canvasPixel)
-  {
-    if(p_Pixel.i_xPos != null && p_Pixel.i_yPos != null)
-    {
-      const index = (p_Pixel.i_yPos * rowSize) + p_Pixel.i_xPos;
-      if(index > pixelArraySize && index < 0){
-        return;
-      }
-
-      pixelArray.value[index] = p_Pixel;
-
-      console.log("updated pixel: " , p_Pixel);
-      
-    }
-    else
-    {
-      console.error("pixel coordinates not selected!")
-    }
-    
   }
 
   function ClearPixelArray()
@@ -66,80 +43,19 @@ import { onMounted, ref } from 'vue';
             CleanPixelArray[(y * rowSize) + x] = CurrentPixel;
         }
       }
-      console.log("cleared canvas")
       pixelArray.value = CleanPixelArray;
   }
 
-  async function GetCanvasState() 
-  {
-    const url = 'http://localhost:3000/initalize-canvas';
-
-    try 
-    {
-      const response = await fetch(url);
-      
-      const data = await response.json();
-
-      pixelArray.value = data.currentCanvas;
-
-      console.log("Canvas Loaded Sucefully"); 
-    } 
-    catch (error) 
-    {
-      console.error('Fetch error:', error);
-    }
-  }
-
-  async function UpdatePixel()
-  {
-    try 
-    {
-      const url = 'http://localhost:3000/update-pixel';
-
-      const response = await fetch(url, {
-        method: 'POST', // Specify the HTTP method
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(
-          {
-            "X": selectedPixelCoordinates.value?.i_xCord,
-            "Y": selectedPixelCoordinates.value?.i_yCord,
-            "Color": selectedPixelColor.value
-          }
-        )
-      });
-
-      if(selectedPixelCoordinates.value?.i_xCord != null && selectedPixelCoordinates.value?.i_yCord != null)
-      {
-        const pixel :i_canvasPixel = 
-        {
-            i_xPos: selectedPixelCoordinates.value?.i_xCord,
-            i_yPos: selectedPixelCoordinates.value?.i_yCord,
-            s_pixelColor: selectedPixelColor.value,
-        }
-
-        PaintPixel(pixel);
-      }
-    } 
-
-    catch (error) 
-    {
-      console.error('Error:', error);
-    }
-
-  }
-
-  onMounted(() => { GetCanvasState() });
+  onMounted(async () => { pixelArray.value = await GetCanvasState() });
 
   onMounted(() => { 
-    const eventSource = new EventSource('http://localhost:3000/events');
+    const eventSource = new EventSource('http://localhost:3000/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
     console.log(event.data);
     const pixel: i_canvasPixel = JSON.parse(event.data);
 
 
-    PaintPixel(pixel);
+    PaintPixel(pixel, pixelArray.value);
    
     }
   });
@@ -203,7 +119,10 @@ import { onMounted, ref } from 'vue';
       <div :style="{ display: 'flex', flexDirection: 'column', width: '20%', alignItems:'center', justifyContent: 'center'}">
 
         <div @click="ClearPixelArray()" class="paint-pixel-button"> CLEAR CANVAS </div>
-        <div @click="UpdatePixel()" class="paint-pixel-button"> paint PIXEL </div>
+        <div 
+          @click="UpdatePixel(selectedPixelCoordinates, selectedPixelColor, pixelArray, ToggleMessage, MessageText)" 
+          class="paint-pixel-button"> 
+          paint PIXEL </div>
 
       </div>
 
@@ -233,6 +152,11 @@ import { onMounted, ref } from 'vue';
     class="grid-container" 
     @wheel.prevent="handleWheel"
   >
+    <div v-if='ToggleMessage == true' class="MessageContainer">
+        <div class="MessageContainerHeader">MENSAGEM</div>
+        <p style="color:black">{{MessageText}}</p>
+    </div>
+
     <div 
       ref="gridRef"
       class="square-grid"
@@ -399,6 +323,30 @@ import { onMounted, ref } from 'vue';
   .pixel:hover {
     cursor: pointer;
     filter: brightness(0.8);
+  }
+
+  /**Message popup  */
+  .MessageContainer {
+    width: 500px;
+    height: 100px;
+    background-color: rgba(238, 238, 240, 0.92); 
+    color: antiquewhite;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .MessageContainerHeader {
+    width: 100%;
+    height: 30%;
+    padding-top: 20px;
+    background-color: #ff7a00;
+    font-family: "Press Start 2P", monospace;
+    text-align: center;
   }
 
 </style>
