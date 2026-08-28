@@ -75,7 +75,6 @@
   onMounted(() => { 
     const eventSource = new EventSource('http://localhost:3000/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
-    console.log(event.data);
     const pixel: i_canvasPixel = JSON.parse(event.data);
 
 
@@ -183,9 +182,10 @@
         :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
         class="pixel" 
         :style="{ 
-          backgroundColor: pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord
-            ? '#b3b3b3'
-            : pixel.s_pixelColor
+          backgroundColor: pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord 
+           ? `color-mix(in srgb, ${pixel.s_pixelColor}, black 60%)`
+           : pixel.s_pixelColor,
+           
         }" 
         @click="SelectPixel(pixel.i_xPos, pixel.i_yPos)"
       ></div>
@@ -345,7 +345,7 @@
 
   .pixel:hover {
     cursor: pointer;
-    filter: brightness(0.8);
+    filter: brightness(0.7);
   }
 
   /**Message popup  */
