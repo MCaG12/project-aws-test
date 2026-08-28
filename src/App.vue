@@ -52,6 +52,20 @@
   {
     if(isDarkModeOn.value)
     {
+      pageBackgroundColor.value = "#121212";   
+      buttonBackGroundColor.value = "#2D2D3A"; 
+      fontColor.value = "#E2E8F0";            
+      menuBackGround.value = "#1E1E2A";        
+      headerBackGroundColor.value = "#5732A8";  
+      subMenuBorderColor.value = "#121212";
+
+      gridBackgroundColor.value = "#0F172A";    
+      gridBorderColor.value = "#1E293B";        
+      gridHoverColor.value = "#334155";         
+      gridSelectedColor.value = "#38BDF8"; 
+    }
+    else
+    {
       pageBackgroundColor.value = "#ffffff"
       buttonBackGroundColor.value = "#ffffff";
       fontColor.value = "#000000"
@@ -62,25 +76,15 @@
       gridBackgroundColor.value = "#FFFFFF";
       gridBorderColor.value = "#B0B0B0";         
       gridHoverColor.value = "#E2E8F0";
-      gridSelectedColor.value = "#2563EB";
-    }
-    else
-    {
-      pageBackgroundColor.value = "#121212";   
-      buttonBackGroundColor.value = "#2D2D3A"; 
-      fontColor.value = "#E2E8F0";            
-      menuBackGround.value = "#1E1E2A";        
-      headerBackGroundColor.value = "#5732A8"; 
-      subMenuBorderColor.value = "#121212";
-
-      gridBackgroundColor.value = "#0F172A";    
-      gridBorderColor.value = "#1E293B";        
-      gridHoverColor.value = "#334155";         
-      gridSelectedColor.value = "#38BDF8";        
+      gridSelectedColor.value = "#2563EB";        
 
     }
-    isDarkModeOn.value = !isDarkModeOn.value
   }
+
+  function toggleColorMode() {
+    isDarkModeOn.value = !isDarkModeOn.value;
+    changePageColorMode();
+}
 
   function selectColor(p_selectedColor : string)
   { 
@@ -99,12 +103,24 @@
     );
 }
 
+//kinda of a cheesy way to do it but it works
+function pickPixelColor()
+{
+  let selectedCurrentPixelColor = pixelArray.value[(selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord]?.s_pixelColor; 
+  if(selectedCurrentPixelColor != null)
+  {
+    selectedPixelColor.value = selectedCurrentPixelColor;
+  }
+}
+
   onMounted(async () => 
   { 
     //initializing client canvas and previously used color array
     pixelArray.value = await GetCanvasState();
 
+    const cacheIsDarkModeOn = localStorage.getItem('isDarkModeOn');
     const cachedPreviouslyUsedColors = localStorage.getItem('userPreviouslyUsedColorsCache');
+
     if (cachedPreviouslyUsedColors) {
       const usersPreviousColors = JSON.parse(cachedPreviouslyUsedColors);
       lastUsedColors.value = usersPreviousColors;
@@ -114,6 +130,11 @@
         selectedPixelColor.value = usersPreviousColors[0];
       }
     }
+
+    const initialDarkMode = cacheIsDarkModeOn !== null ? JSON.parse(cacheIsDarkModeOn) : false;
+    isDarkModeOn.value = initialDarkMode;
+
+    changePageColorMode();
   });
 
   onMounted(() => { 
@@ -125,6 +146,10 @@
    
     }
   });
+
+  watch(isDarkModeOn, (isDarkModeOn) => {
+    localStorage.setItem('isDarkModeOn', JSON.stringify(isDarkModeOn));
+  })
 
   watch(selectedPixelColor, (newColor) => {
     const isColorAlreadyUsed = lastUsedColors.value.includes(newColor);
@@ -183,7 +208,7 @@
         <div 
           class="paint-pixel-button" 
           :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
-          @click="changePageColorMode()" > 
+          @click="toggleColorMode()" > 
           {{isDarkModeOn ? 'Dark Mode': 'Light Mode'}}
         </div> 
 
@@ -194,7 +219,12 @@
           paint PIXEL 
         </div>
 
-        <div class="paint-pixel-button" :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> Color picker</div> 
+        <div 
+        @click="pickPixelColor()"
+        class="paint-pixel-button" 
+        :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
+          Pick Pixel Color
+        </div> 
 
       </div>
 
@@ -249,7 +279,9 @@
         :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
         class="pixel" 
         :style="{ 
-          backgroundColor: pixel.s_pixelColor || gridBackgroundColor,
+          backgroundColor: (pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord) 
+          ? `color-mix(in srgb, ${pixel.s_pixelColor}, black 50%)` 
+          : pixel.s_pixelColor,
           borderColor: gridBorderColor,
           outline: (pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord) 
             ? `2px solid ${gridSelectedColor}` 
