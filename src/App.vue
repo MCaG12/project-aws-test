@@ -18,8 +18,26 @@
   const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
   const lastUsedColors = ref<string[]>([]);
 
-  const ToggleMessage = ref<boolean>(false)
-  const MessageText = ref<string>("");
+  const toggleMessage = ref<boolean>(false)
+  const messageText = ref<string>("");
+
+  const isDarkModeOn = ref<boolean>(false)
+
+  //header stuff
+  const pageBackgroundColor = ref<string>("#FFFFFF");
+  const buttonBackGroundColor = ref<string>("#FFFFFF");
+  const fontColor = ref<string>("#000000");
+  const menuBackGround = ref<string>("#f7efda")
+  const headerBackGroundColor = ref<string>("#ff7a00")
+  const subMenuBorderColor = ref<string>("#e0d4cc")
+
+  // grid stuff
+  const gridBackgroundColor = ref<string>('#FFFFFF') 
+  const gridBorderColor = ref<string>('#E0E0E0')     
+  const gridHoverColor = ref<string>('#F0F0F8')      
+  const gridSelectedColor = ref<string>('#3B82F6')
+  
+  
 
   function SelectPixel(p_i_xCoord: number, p_i_yCoord: number)
   {
@@ -30,22 +48,38 @@
     selectedPixelCoordinates.value = newPixelCordinates;
   }
 
-  function ClearPixelArray()
+  function changePageColorMode()
   {
-    let CleanPixelArray = [];
-      for(let y = 0; y < rowSize; y++)
-      {
-        for(let x = 0; x < rowSize; x++)
-        {
-            let CurrentPixel: i_canvasPixel = {
-              i_xPos: x,
-              i_yPos: y,
-              s_pixelColor: '#ffffff',
-            }
-            CleanPixelArray[(y * rowSize) + x] = CurrentPixel;
-        }
-      }
-      pixelArray.value = CleanPixelArray;
+    if(isDarkModeOn.value)
+    {
+      pageBackgroundColor.value = "#ffffff"
+      buttonBackGroundColor.value = "#ffffff";
+      fontColor.value = "#000000"
+      menuBackGround.value = "#f7efda"
+      headerBackGroundColor.value = "#ff7a00";
+      subMenuBorderColor.value = "#e0d4cc";
+
+      gridBackgroundColor.value = "#FFFFFF";
+      gridBorderColor.value = "#B0B0B0";         
+      gridHoverColor.value = "#E2E8F0";
+      gridSelectedColor.value = "#2563EB";
+    }
+    else
+    {
+      pageBackgroundColor.value = "#121212";   
+      buttonBackGroundColor.value = "#2D2D3A"; 
+      fontColor.value = "#E2E8F0";            
+      menuBackGround.value = "#1E1E2A";        
+      headerBackGroundColor.value = "#5732A8"; 
+      subMenuBorderColor.value = "#121212";
+
+      gridBackgroundColor.value = "#0F172A";    
+      gridBorderColor.value = "#1E293B";        
+      gridHoverColor.value = "#334155";         
+      gridSelectedColor.value = "#38BDF8";        
+
+    }
+    isDarkModeOn.value = !isDarkModeOn.value
   }
 
   function selectColor(p_selectedColor : string)
@@ -60,8 +94,8 @@
         selectedPixelCoordinates.value,
         selectedPixelColor.value,
         pixelArray.value,
-        ToggleMessage,      
-        MessageText        
+        toggleMessage,      
+        messageText        
     );
 }
 
@@ -106,6 +140,11 @@
     localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
   });
 
+  watch(() => {
+    document.body.style.backgroundColor = isDarkModeOn.value ? '#0a0a0a' : '#f0f0f0';
+  });
+
+
   const zoom = ref(1);
   const containerRef = ref(null);
   const gridRef = ref(null);
@@ -120,11 +159,12 @@
 
 <template>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <div class="main-header-bar">
-      <div class="selected-color-card">
-        <span class="header-title">SELECTED COLOR</span>
+  <div class="main-header-bar" :style="{ backgroundImage: isDarkModeOn ? 'url(../public/darkModeBackGround.png)' : 'url(../public/lightModeBackGround.png)',
+                                         backgroundColor: headerBackGroundColor  }">
+      <div class="selected-color-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
+        <span class="header-title" :style="{color: fontColor}">SELECTED COLOR</span>
         <input type="color" v-model="selectedPixelColor"/>
-        <span class="header-title">LAST PICKED COLORS</span>
+        <span class="header-title" :style="{color: fontColor}">LAST PICKED COLORS</span>
         <div style="display: flex; flex-direction: row;">
           <div 
             v-for="color in lastUsedColors" 
@@ -138,22 +178,31 @@
       </div>
 
       <!-- /**button for the paint pixel */ -->
-      <div :style="{ display: 'flex', flexDirection: 'column', width: '20%', alignItems:'center', justifyContent: 'center'}">
+      <div :style="{ display: 'flex', flexDirection: 'row', width: '60%', alignItems:'center', justifyContent:'space-evenly'}">
 
-        <div @click="ClearPixelArray()" class="paint-pixel-button"> CLEAR CANVAS </div>
         <div 
-            @click="onUpdatePixelClick()" 
+          class="paint-pixel-button" 
+          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
+          @click="changePageColorMode()" > 
+          {{isDarkModeOn ? 'Dark Mode': 'Light Mode'}}
+        </div> 
+
+        <div 
+          @click="onUpdatePixelClick()" 
+          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"
           class="paint-pixel-button"> 
           paint PIXEL 
         </div>
 
+        <div class="paint-pixel-button" :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> Color picker</div> 
+
       </div>
 
       <!-- /** displays the users selected coordinates */ -->
-      <div class="coordinate-card">
+      <div class="coordinate-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
         <div class="card-header">
           <span class="dot"></span>
-          <span class="header-title">SELECTED PIXEL COORDINATES</span>
+          <span class="header-title" :style="{color: fontColor}">SELECTED PIXEL COORDINATES</span>
         </div>
         
         <div class="card-body">
@@ -173,49 +222,62 @@
   <div 
     ref="containerRef" 
     class="grid-container" 
+    :style="{backgroundColor: pageBackgroundColor }"
     @wheel.prevent="($event) => {zoom = handleWheel($event, containerRef, STEP, MIN_ZOOM, MAX_ZOOM, zoom, mousePos)}"
   >
-    <div v-if='ToggleMessage == true' class="MessageContainer">
+    <div v-if='toggleMessage == true' class="MessageContainer">
         
         <div class="MessageContainerHeader">MENSAGEM</div>
-        <p class="MessageContainerText">{{MessageText}}</p>
+        <p class="MessageContainerText">{{messageText}}</p>
     </div>
 
+
+    <div style="display: flex; flex-direction: row;">
+    <!-- START OF THE PIXEL GRID -->
     <div 
       ref="gridRef"
       class="square-grid"
-      :style="{ zoom: zoom }"
+      :style="{ 
+        zoom: zoom,
+        backgroundColor: gridBackgroundColor
+      }"
       @mousemove="($event) => {updateMousePos($event, gridRef, mousePos, zoom)}"
     >
+
       <div 
         v-for="(pixel, index) in pixelArray" 
         :key="(pixel.i_xPos * rowSize) + pixel.i_yPos || index"
         class="pixel" 
         :style="{ 
-          backgroundColor: pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord 
-           ? `color-mix(in srgb, ${pixel.s_pixelColor}, black 60%)`
-           : pixel.s_pixelColor,
-           
+          backgroundColor: pixel.s_pixelColor || gridBackgroundColor,
+          borderColor: gridBorderColor,
+          outline: (pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord) 
+            ? `2px solid ${gridSelectedColor}` 
+            : 'none',
+          outlineOffset: '-2px',
+          zIndex: (pixel.i_xPos == selectedPixelCoordinates?.i_xCord && pixel.i_yPos == selectedPixelCoordinates?.i_yCord) ? 1 : 0
         }" 
         @click="SelectPixel(pixel.i_xPos, pixel.i_yPos)"
       ></div>
+      
     </div>
-
-    
+    <!-- END OF THE PIXEL GRID -->
+  </div>
 
   </div>
 </template>
 
 <style scoped>
-
+  *{
+    padding: 0px;
+    margin: 0px;
+  }
   .main-header-bar {
     width: 100%;
     min-height: 120px; /* Fixed height so header items fit properly */
     padding: 10px 16px;
     box-sizing: border-box;
 
-    background-color: #ff7a00;
-    background-image: url("../public/test-bg.png");
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
@@ -236,7 +298,7 @@
     flex: 1;
     max-width: 320px;
     background: rgba(238, 238, 240, 0.92); 
-    border: 3px solid #e0d4cc; 
+    border: 3px solid; 
     font-family: "Press Start 2P", monospace;
     padding: 10px;
     box-sizing: border-box;
@@ -245,7 +307,7 @@
   .selected-color-card {
     max-width: 300px;
     background: rgba(238, 238, 240, 0.92); 
-    border: 3px solid #e0d4cc; 
+    border: 3px solid ; 
     font-family: "Press Start 2P", monospace;
     padding: 10px;
     box-sizing: border-box;
@@ -268,7 +330,6 @@
 
   .paint-pixel-button {
     padding: 10px 16px;
-    background-color: #fcfcfc;
     color: #1a1a1a;
     border: 3px solid #1a1a1a;
     
@@ -351,7 +412,8 @@
     box-sizing: border-box;
     width: 100%;          
     height: 100%;          
-    border: 2px solid #535353;
+    border-style:solid;
+    border-width: 2px;
   }
 
   .pixel:hover {
