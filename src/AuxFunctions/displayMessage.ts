@@ -1,10 +1,12 @@
+import type { Ref } from "vue";
+
 const displayMessageTimeMilliSeconds = 5000; 
 
-export default function DisplayMessage(p_toggleMessage: boolean)
+export default function DisplayMessage(p_toggleMessage: Ref<boolean> )
 {
-    p_toggleMessage = true;
+    p_toggleMessage.value = true;
     
     setTimeout(() => {
-    p_toggleMessage = false;
+    p_toggleMessage.value = false;
     }, displayMessageTimeMilliSeconds)
 } 

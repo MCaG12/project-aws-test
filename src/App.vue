@@ -4,7 +4,7 @@
   import GetCanvasState from './AuxFunctions/getCanvasState';
   import PaintPixel from './AuxFunctions/paintPixel';
   import type i_coordinatesPixel from './interfaces/i_coordinatesPixel';
-  import UpdatePixel from './AuxFunctions/updatePixel';
+  import {UpdatePixel} from './AuxFunctions/updatePixel';
   import updateMousePos from './AuxFunctions/updateMousePosition';
   import handleWheel from './AuxFunctions/handleMouseWheelInput';
  
@@ -55,6 +55,16 @@
     selectedPixelColor.value = p_selectedColor;
   }
 
+  function onUpdatePixelClick() {
+    UpdatePixel(
+        selectedPixelCoordinates.value,
+        selectedPixelColor.value,
+        pixelArray.value,
+        ToggleMessage,      
+        MessageText        
+    );
+}
+
   onMounted(async () => 
   { 
     //initializing client canvas and previously used color array
@@ -76,7 +86,6 @@
     const eventSource = new EventSource('http://localhost:3000/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
     const pixel: i_canvasPixel = JSON.parse(event.data);
-
 
     PaintPixel(pixel, pixelArray.value);
    
@@ -133,7 +142,7 @@
 
         <div @click="ClearPixelArray()" class="paint-pixel-button"> CLEAR CANVAS </div>
         <div 
-          @click="UpdatePixel(selectedPixelCoordinates, selectedPixelColor, pixelArray, ToggleMessage, MessageText)" 
+            @click="onUpdatePixelClick()" 
           class="paint-pixel-button"> 
           paint PIXEL 
         </div>
@@ -167,8 +176,9 @@
     @wheel.prevent="($event) => {zoom = handleWheel($event, containerRef, STEP, MIN_ZOOM, MAX_ZOOM, zoom, mousePos)}"
   >
     <div v-if='ToggleMessage == true' class="MessageContainer">
+        
         <div class="MessageContainerHeader">MENSAGEM</div>
-        <p style="color:black">{{MessageText}}</p>
+        <p class="MessageContainerText">{{MessageText}}</p>
     </div>
 
     <div 
@@ -191,6 +201,7 @@
       ></div>
     </div>
 
+    
 
   </div>
 </template>
@@ -370,6 +381,13 @@
     background-color: #ff7a00;
     font-family: "Press Start 2P", monospace;
     text-align: center;
+  }
+
+  .MessageContainerText {
+    color:#222222;
+    font-family: "Press Start 2P", monospace;
+    text-align: center;
+    font-size: 12px;
   }
 
   .previouslyUsedColor

@@ -2,11 +2,15 @@ import type i_coordinatesPixel from "@/interfaces/i_coordinatesPixel";
 import DisplayMessage from "./displayMessage";
 import PaintPixel from "./paintPixel";
 import type i_canvasPixel from "@/interfaces/i_canvasPixel";
+import type { Ref } from "vue";
 
-export default
-async function UpdatePixel(p_selectedCoordinates : i_coordinatesPixel, p_selectedColor : string, p_pixelArray: i_canvasPixel[], 
-                           p_toggleMessage: boolean, p_messageText : string )
-{
+export async function UpdatePixel(
+    p_selectedCoordinates: i_coordinatesPixel,
+    p_selectedColor: string,
+    p_pixelArray: i_canvasPixel[],
+    p_toggleMessage: Ref<boolean>,
+    p_messageText: Ref<string>
+) {
 try 
 {
     const url = 'http://localhost:3000/update-pixel';
@@ -43,8 +47,9 @@ try
     }
     else
     {
+
         const responseJson = await response.json();
-        p_messageText = responseJson.message;
+        p_messageText.value = responseJson.message;
         DisplayMessage(p_toggleMessage);
     }
 } 
