@@ -13,7 +13,7 @@
 
   const selectedPixelCoordinates = ref<i_coordinatesPixel>({i_xCord : 0, i_yCord: 0});
 
-  const selectedPixelColor = ref<string>('#ff0000');
+  const selectedPixelColor = ref<string>('#ffffff');
   const pixelArray = ref<i_canvasPixel[]>([]);
   const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
   const lastUsedColors = ref<string[]>([]);
@@ -64,6 +64,11 @@
     if (cachedPreviouslyUsedColors) {
       const usersPreviousColors = JSON.parse(cachedPreviouslyUsedColors);
       lastUsedColors.value = usersPreviousColors;
+
+      if (Array.isArray(usersPreviousColors) && usersPreviousColors.length > 0) {
+        lastUsedColors.value = usersPreviousColors;
+        selectedPixelColor.value = usersPreviousColors[0];
+      }
     }
   });
 
@@ -83,14 +88,14 @@
     const isColorAlreadyUsed = lastUsedColors.value.includes(newColor);
 
     if (!isColorAlreadyUsed) {
-      lastUsedColors.value.push(newColor);
+      lastUsedColors.value.unshift(newColor);
 
       if (lastUsedColors.value.length > maxPickedColorsArraySize) {
-        lastUsedColors.value.shift(); 
+        lastUsedColors.value.pop();
       }
-
-      localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
     }
+
+    localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
   });
 
   const zoom = ref(1);
