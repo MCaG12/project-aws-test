@@ -5,6 +5,8 @@
   import PaintPixel from './AuxFunctions/paintPixel';
   import type i_coordinatesPixel from './interfaces/i_coordinatesPixel';
   import UpdatePixel from './AuxFunctions/updatePixel';
+  import updateMousePos from './AuxFunctions/updateMousePosition';
+  import handleWheel from './AuxFunctions/handleMouseWheelInput';
  
   const displayMessageTimeMilliSeconds = 5000; 
   const maxPickedColorsArraySize = 6;
@@ -46,7 +48,24 @@
       pixelArray.value = CleanPixelArray;
   }
 
-  onMounted(async () => { pixelArray.value = await GetCanvasState() });
+  function selectColor(p_selectedColor : string)
+  { 
+    lastUsedColors.value = lastUsedColors.value.filter(color => color != p_selectedColor);
+    lastUsedColors.value.unshift(p_selectedColor);
+    selectedPixelColor.value = p_selectedColor;
+  }
+
+  onMounted(async () => 
+  { 
+    //initializing client canvas and previously used color array
+    pixelArray.value = await GetCanvasState();
+
+    const cachedPreviouslyUsedColors = localStorage.getItem('userPreviouslyUsedColorsCache');
+    if (cachedPreviouslyUsedColors) {
+      const usersPreviousColors = JSON.parse(cachedPreviouslyUsedColors);
+      lastUsedColors.value = usersPreviousColors;
+    }
+  });
 
   onMounted(() => { 
     const eventSource = new EventSource('http://localhost:3000/events', { withCredentials: true });
@@ -61,8 +80,6 @@
   });
 
   watch(selectedPixelColor, (newColor) => {
-   console.log("selected pixel color changed: " + newColor);
-
     const isColorAlreadyUsed = lastUsedColors.value.includes(newColor);
 
     if (!isColorAlreadyUsed) {
@@ -71,6 +88,8 @@
       if (lastUsedColors.value.length > maxPickedColorsArraySize) {
         lastUsedColors.value.shift(); 
       }
+
+      localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
     }
   });
 
@@ -78,43 +97,11 @@
   const containerRef = ref(null);
   const gridRef = ref(null);
 
-  const mousePos = ref({ x: 0, y: 0 });
+  const mousePos = ref<i_coordinatesPixel>({ i_xCord: 0, i_yCord: 0 });
 
   const MIN_ZOOM = 0.25;
   const MAX_ZOOM = 2.0;
   const STEP = 0.15;
-
-  const updateMousePos = (e) => {
-    if (!gridRef.value) return;
-    const rect = gridRef.value.getBoundingClientRect();
-    
-    mousePos.value = {
-      x: (e.clientX - rect.left) / zoom.value,
-      y: (e.clientY - rect.top) / zoom.value
-    };
-  };
-
-  const handleWheel = (e) => {
-    const container = containerRef.value;
-    if (!container) return;
-
-    const oldZoom = zoom.value;
-    
-    let newZoom = e.deltaY < 0 ? oldZoom + STEP : oldZoom - STEP;
-    newZoom = Math.min(Math.max(newZoom, MIN_ZOOM), MAX_ZOOM);
-
-    if (newZoom === oldZoom) return;
-
-    const scrollX = container.scrollLeft;
-    const scrollY = container.scrollTop;
-
-    zoom.value = newZoom;
-
-    const zoomFactor = newZoom / oldZoom;
-    
-    container.scrollLeft = (scrollX + mousePos.value.x * oldZoom) * zoomFactor - mousePos.value.x * newZoom;
-    container.scrollTop = (scrollY + mousePos.value.y * oldZoom) * zoomFactor - mousePos.value.y * newZoom;
-  };
 
 </script>
 
@@ -130,7 +117,8 @@
             v-for="color in lastUsedColors" 
             :key="color"
             :style="{ backgroundColor: color}"
-            style="border: 1px solid #000000; width: 50px; height: 50px;"
+            class="previouslyUsedColor"
+            v-on:click="selectColor(color)"
           ></div>
         </div>
 
@@ -172,7 +160,7 @@
   <div 
     ref="containerRef" 
     class="grid-container" 
-    @wheel.prevent="handleWheel"
+    @wheel.prevent="($event) => {zoom = handleWheel($event, containerRef, STEP, MIN_ZOOM, MAX_ZOOM, zoom, mousePos)}"
   >
     <div v-if='ToggleMessage == true' class="MessageContainer">
         <div class="MessageContainerHeader">MENSAGEM</div>
@@ -183,7 +171,7 @@
       ref="gridRef"
       class="square-grid"
       :style="{ zoom: zoom }"
-      @mousemove="updateMousePos"
+      @mousemove="($event) => {updateMousePos($event, gridRef, mousePos, zoom)}"
     >
       <div 
         v-for="(pixel, index) in pixelArray" 
@@ -224,10 +212,10 @@
     gap: 16px;
     position: sticky;
     top: 0;
+
   }
 
   /** Pixel UI Card Base Styling */
-  .selected-color-card,
   .coordinate-card {
     flex: 1;
     max-width: 320px;
@@ -239,11 +227,19 @@
   }
 
   .selected-color-card {
+    max-width: 300px;
+    background: rgba(238, 238, 240, 0.92); 
+    border: 3px solid #e0d4cc; 
+    font-family: "Press Start 2P", monospace;
+    padding: 10px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    min-height: 150px;
+    max-height: 150px;
   }
 
   /* Button & Action Container */
@@ -369,6 +365,19 @@
     background-color: #ff7a00;
     font-family: "Press Start 2P", monospace;
     text-align: center;
+  }
+
+  .previouslyUsedColor
+  {
+    border: 1px solid #000000; 
+    width: 25px; 
+    height: 25px;
+  }
+
+  .previouslyUsedColor:hover
+  {
+    cursor: pointer;
+    filter: brightness(0.8);
   }
 
 </style>
