@@ -326,13 +326,13 @@ function pickPixelColor()
     gap: 16px;
     position: sticky;
     top: 0;
-
+    flex-wrap: wrap;     
+    min-height: unset;  
   }
 
   /** Pixel UI Card Base Styling */
   .coordinate-card {
-    flex: 1;
-    max-width: 320px;
+    flex: 1 1 220px;  
     background: rgba(238, 238, 240, 0.92); 
     border: 3px solid; 
     font-family: "Press Start 2P", monospace;
@@ -341,7 +341,8 @@ function pickPixelColor()
   }
 
   .selected-color-card {
-    max-width: 300px;
+    max-width: 100%;
+    flex: 1 1 220px;       
     background: rgba(238, 238, 240, 0.92); 
     border: 3px solid ; 
     font-family: "Press Start 2P", monospace;
@@ -352,7 +353,7 @@ function pickPixelColor()
     align-items: center;
     justify-content: center;
     gap: 8px;
-    min-height: 150px;
+    
     max-height: 150px;
   }
 
@@ -434,6 +435,8 @@ function pickPixelColor()
     place-items: center;
     padding: 40px;
     box-sizing: border-box;
+    height: 80vh;
+    padding: 16px;
   }
 
   .square-grid {
@@ -446,8 +449,8 @@ function pickPixelColor()
 
   .pixel {
     box-sizing: border-box;
-    width: 100%;          
-    height: 100%;          
+    width: auto;          
+    height: auto;          
     border-style:solid;
     border-width: 2px;
   }
