@@ -161,6 +161,10 @@ function pickPixelColor()
         lastUsedColors.value.pop();
       }
     }
+    else
+    {
+      selectColor(newColor);
+    }
 
     localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
   });
