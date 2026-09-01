@@ -7,6 +7,7 @@
   import {UpdatePixel} from './AuxFunctions/updatePixel';
   import updateMousePos from './AuxFunctions/updateMousePosition';
   import handleWheel from './AuxFunctions/handleMouseWheelInput';
+import downloadFile from './AuxFunctions/downloadFile';
  
   const displayMessageTimeMilliSeconds = 5000; 
   const maxPickedColorsArraySize = 6;
@@ -15,7 +16,7 @@
 
   const selectedPixelColor = ref<string>('#ffffff');
   const pixelArray = ref<i_canvasPixel[]>([]);
-  const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
+  const rowSize = 128; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
   const lastUsedColors = ref<string[]>([]);
 
   const toggleMessage = ref<boolean>(false)
@@ -103,15 +104,17 @@
     );
 }
 
-//kinda of a cheesy way to do it but it works
-function pickPixelColor()
-{
-  let selectedCurrentPixelColor = pixelArray.value[(selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord]?.s_pixelColor; 
-  if(selectedCurrentPixelColor != null)
+  //kinda of a cheesy way to do it but it works
+  function pickPixelColor()
   {
-    selectedPixelColor.value = selectedCurrentPixelColor;
+    let selectedCurrentPixelColor = pixelArray.value[(selectedPixelCoordinates.value.i_yCord * rowSize) + selectedPixelCoordinates.value.i_xCord]?.s_pixelColor; 
+    if(selectedCurrentPixelColor != null)
+    {
+      selectedPixelColor.value = selectedCurrentPixelColor;
+    }
   }
-}
+
+
 
   onMounted(async () => 
   { 
@@ -228,6 +231,13 @@ function pickPixelColor()
         class="paint-pixel-button" 
         :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
           Pick Pixel Color
+        </div> 
+
+        <div 
+        @click="downloadFile()"
+        class="paint-pixel-button" 
+        :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
+          Download Pixel Canvas
         </div> 
 
       </div>
@@ -441,7 +451,7 @@ function pickPixelColor()
 
   .square-grid {
     display: grid;
-    grid-template-columns: repeat(64, 50px);
+    grid-template-columns: repeat(128, 50px);
     grid-auto-rows: 50px;
     background-color: #e0e0e0;
     margin: auto;
