@@ -1,5 +1,5 @@
 import type i_canvasPixel from "@/interfaces/i_canvasPixel";
-const rowSize = 64; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
+const rowSize = 128; // to quickly get the page up we will assume the grid will be a 32/32 square leading to 1024 pixels
 const pixelArraySize = rowSize * rowSize;
 
 
