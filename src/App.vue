@@ -194,9 +194,9 @@ import downloadFile from './AuxFunctions/downloadFile';
   <div class="main-header-bar" :style="{ backgroundImage: isDarkModeOn ? 'url(../public/darkModeBackGround.png)' : 'url(../public/lightModeBackGround.png)',
                                          backgroundColor: headerBackGroundColor  }">
       <div class="selected-color-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
-        <span class="header-title" :style="{color: fontColor}">SELECTED COLOR</span>
+        <span class="header-title" :style="{color: fontColor}">COR SELECIONADA</span>
         <input type="color" v-model="selectedPixelColor"/>
-        <span class="header-title" :style="{color: fontColor}">LAST PICKED COLORS</span>
+        <span class="header-title" :style="{color: fontColor}">ULTIMAS CORES UTILIZADAS</span>
         <div style="display: flex; flex-direction: row;">
           <div 
             v-for="color in lastUsedColors" 
@@ -216,28 +216,28 @@ import downloadFile from './AuxFunctions/downloadFile';
           class="paint-pixel-button" 
           :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
           @click="toggleColorMode()" > 
-          {{isDarkModeOn ? 'Dark Mode': 'Light Mode'}}
+          {{isDarkModeOn ? 'MODO ESCURO': 'MODO CLARO'}}
         </div> 
 
         <div 
           @click="onUpdatePixelClick()" 
           :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"
           class="paint-pixel-button"> 
-          paint PIXEL 
+          PINTAR PIXEL 
         </div>
 
         <div 
         @click="pickPixelColor()"
         class="paint-pixel-button" 
         :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
-          Pick Pixel Color
+          SELECIONAR COR PIXEL
         </div> 
 
         <div 
         @click="downloadFile()"
         class="paint-pixel-button" 
         :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
-          Download Pixel Canvas
+          SALVAR IMAGEM CANVAS 
         </div> 
 
       </div>
@@ -246,7 +246,7 @@ import downloadFile from './AuxFunctions/downloadFile';
       <div class="coordinate-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
         <div class="card-header">
           <span class="dot"></span>
-          <span class="header-title" :style="{color: fontColor}">SELECTED PIXEL COORDINATES</span>
+          <span class="header-title" :style="{color: fontColor}">COORDENADAS PIXEL SELECIONADO</span>
         </div>
         
         <div class="card-body">
