@@ -1,5 +1,7 @@
+import { Url } from "@/const/url";
+
 export default async function downloadFile() {
-    const response = await fetch("http://localhost:3000/get-canvas-ppm");
+    const response = await fetch(Url + "/get-canvas-ppm");
 
     if (!response.ok) {
         throw new Error("Download failed");
