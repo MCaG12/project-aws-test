@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { onMounted, ref, watch } from 'vue';
+  import { onMounted, ref, watch, watchEffect } from 'vue';
   import type i_canvasPixel from './interfaces/i_canvasPixel';
   import GetCanvasState from './AuxFunctions/getCanvasState';
   import PaintPixel from './AuxFunctions/paintPixel';
@@ -7,7 +7,8 @@
   import {UpdatePixel} from './AuxFunctions/updatePixel';
   import updateMousePos from './AuxFunctions/updateMousePosition';
   import handleWheel from './AuxFunctions/handleMouseWheelInput';
-import downloadFile from './AuxFunctions/downloadFile';
+  import downloadFile from './AuxFunctions/downloadFile';
+import { Url } from './const/url';
  
   const displayMessageTimeMilliSeconds = 5000; 
   const maxPickedColorsArraySize = 6;
@@ -141,7 +142,7 @@ import downloadFile from './AuxFunctions/downloadFile';
   });
 
   onMounted(() => { 
-    const eventSource = new EventSource('http://localhost:3000/events', { withCredentials: true });
+    const eventSource = new EventSource(Url + '/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
     const pixel: i_canvasPixel = JSON.parse(event.data);
 
@@ -172,7 +173,7 @@ import downloadFile from './AuxFunctions/downloadFile';
     localStorage.setItem('userPreviouslyUsedColorsCache', JSON.stringify(lastUsedColors.value));
   });
 
-  watch(() => {
+  watchEffect(() => {
     document.body.style.backgroundColor = isDarkModeOn.value ? '#0a0a0a' : '#f0f0f0';
   });
 

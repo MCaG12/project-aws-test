@@ -3,6 +3,7 @@ import DisplayMessage from "./displayMessage";
 import PaintPixel from "./paintPixel";
 import type i_canvasPixel from "@/interfaces/i_canvasPixel";
 import type { Ref } from "vue";
+import { Url } from "@/const/url";
 
 export async function UpdatePixel(
     p_selectedCoordinates: i_coordinatesPixel,
@@ -13,7 +14,7 @@ export async function UpdatePixel(
 ) {
 try 
 {
-    const url = 'http://localhost:3000/update-pixel';
+    const url = Url + '/update-pixel';
 
     const response = await fetch(url, {
     method: 'POST', // Specify the HTTP method

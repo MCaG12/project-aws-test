@@ -1,10 +1,11 @@
+import { Url } from "@/const/url";
 import type i_canvasPixel from "@/interfaces/i_canvasPixel";
 import {  ref } from 'vue';
 
 export default 
 async function GetCanvasState() 
 {
-    const url = 'http://localhost:3000/initalize-canvas';
+    const url = Url + '/initalize-canvas';
     let pixelArray = [];
 
     try 
