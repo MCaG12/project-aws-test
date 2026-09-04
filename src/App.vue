@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { onMounted, ref, watch, watchEffect } from 'vue';
+  import { onMounted, onUnmounted, ref, watch, watchEffect } from 'vue';
   import type i_canvasPixel from './interfaces/i_canvasPixel';
   import GetCanvasState from './AuxFunctions/getCanvasState';
   import PaintPixel from './AuxFunctions/paintPixel';
@@ -150,8 +150,10 @@
     lastSnapShotTime.value = data.TimeFound[0].LAST_TIME_SAVED; 
   }});
 
+  let eventSource: EventSource | null = null;
+
   onMounted(() => { 
-    const eventSource = new EventSource(Url.backendUrl + '/events', { withCredentials: true });
+    eventSource = new EventSource(Url.backendUrl + '/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
     const parsedSSEevent = JSON.parse(event.data);
     const SSEEventCode : number = parsedSSEevent.i_SSEBroadcastCode
@@ -174,6 +176,11 @@
           break;
         }
     }}
+  });
+
+
+  onUnmounted(() => {
+      eventSource?.close();
   });
 
   watch(isDarkModeOn, (isDarkModeOn) => {
@@ -310,7 +317,7 @@
     <div v-if='toggleMessage == true' class="MessageContainer">
         
         <div class="MessageContainerHeader" :style="{backgroundColor: headerBackGroundColor}">MENSAGEM</div>
-        <p class="MessageContainerText">{{messageText}}</p>
+        <p class="MessageContainerText" >{{messageText}}</p>
     </div>
 
 
