@@ -13,6 +13,7 @@
   import { SSEReqCodes } from './const/SSEBroadcastCodes';
  
   const usersConnected = ref<number>(0);
+  const lastSnapShotTime = ref<number>(0);
   
   const maxPickedColorsArraySize = 6;
 
@@ -141,21 +142,38 @@
     isDarkModeOn.value = initialDarkMode;
 
     changePageColorMode();
+
+    const urlLastSnapshot = Url.backendUrl + '/canvas-snapshots/fetch-last-snapshot-update-time';
+    const response = await fetch(urlLastSnapshot);
+    const data = await response.json();
+
+    lastSnapShotTime.value = data.TimeFound[0].LAST_TIME_SAVED; 
   }});
 
   onMounted(() => { 
     const eventSource = new EventSource(Url.backendUrl + '/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
-    console.log(event.data)
     const parsedSSEevent = JSON.parse(event.data);
-    if(parsedSSEevent.i_SSEBroadcastCode == SSEReqCodes.PAINT_PIXEL_SSE_BROADCAST)
+    const SSEEventCode : number = parsedSSEevent.i_SSEBroadcastCode
+    switch(SSEEventCode)
     {
-      const pixel: i_canvasPixel = parsedSSEevent.any_SSEBroadcastData;
-      console.log(pixel)
-      PaintPixel(pixel, pixelArray.value);
-    }
-   
-    }
+      case SSEReqCodes.PAINT_PIXEL_SSE_BROADCAST:
+        {
+          const pixel: i_canvasPixel = parsedSSEevent.any_SSEBroadcastData;
+          PaintPixel(pixel, pixelArray.value);
+          break;
+        }
+      case SSEReqCodes.USER_SSE_BROADCAST:
+        {
+          usersConnected.value = parsedSSEevent.any_SSEBroadcastData
+          break;
+        }
+      case SSEReqCodes.LAST_SNAP_SHOT_SAVED_SSE_BROADCAST:
+        {
+          lastSnapShotTime.value = parsedSSEevent.any_SSEBroadcastData
+          break;
+        }
+    }}
   });
 
   watch(isDarkModeOn, (isDarkModeOn) => {
@@ -218,8 +236,8 @@
       </div>
 
       <!-- /**button for the paint pixel */ -->
-      <div :style="{display:'flex', flexDirection:'column', width:'50%', height:'100%', alignItems:'center', gap:'30px'}">
-        <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', justifyContent:'space-evenly'}">
+      <div :style="{display:'flex', flexDirection:'column', flex:'2 1 300px', alignItems:'center', gap:'30px'}">
+        <div class="button-container">
           <div 
             class="paint-pixel-button" 
             :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
@@ -249,11 +267,15 @@
           </div> 
         </div>
 
-        <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', gap: '10px'}">
-          <div :style="{ width: '20px', height: '20px', backgroundColor:'#00FF00'}"></div>
-          <div class="MessageContainerText">USUÁRIOS CONECTADOS: {{ usersConnected }}</div>
+        <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', justifyContent:'space-between'}">
+          <div :style="{display:'flex', flexDirection:'row', flex:'2 1 300px', alignItems:'center',gap:'10px'}">
+            <div :style="{ width: '20px', height: '20px', backgroundColor:'#00FF00'}"></div>
+            <div class="MessageContainerText">USUARIOS CONECTADOS: {{ usersConnected }}</div>
+          </div>
 
-          <div class="MessageContainerText">ULTIMO BACKUP DO CANVAS: {{}} ATRÁS</div>
+          <div :style="{display:'flex', flexDirection:'column', flex:'2 1 300px', alignItems:'center', gap:'30px'}">
+            <div class="MessageContainerText">ULTIMO BACKUP DO CANVAS: {{new Date(lastSnapShotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}}</div>   
+          </div>
         </div>
       </div>
 
@@ -386,24 +408,26 @@
   /* Button & Action Container */
   .button-container {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: 8px;
+    flex-direction: row;
   }
 
   .paint-pixel-button {
-    padding: 10px 16px;
-    color: #1a1a1a;
-    border: 3px solid #1a1a1a;
-    
-    font-family: "Press Start 2P", monospace;
-    font-size: 11px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-
-    cursor: pointer;
-    transition: transform 0.05s ease, box-shadow 0.05s ease;
-  }
+  padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 16px);
+  color: #1a1a1a;
+  border: 3px solid #1a1a1a;
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(8px, 1.2vw, 11px);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+  flex: 0 1 auto;
+}
 
   .paint-pixel-button:hover {
     background-color: #e9e9e9;
@@ -489,9 +513,10 @@
   /**Message popup  */
   .MessageContainer {
     width: 500px;
-    height: 100px;
-    background-color: rgba(238, 238, 240, 0.92); 
-    color: antiquewhite;
+    max-width: 90vw;
+    min-height: 100px;
+    background-color: rgba(238, 238, 240, 0.92);
+    color: #222222;
     position: fixed;
     bottom: 0;
     left: 50%;
@@ -499,22 +524,29 @@
     display: flex;
     flex-direction: column;
     text-align: center;
+    z-index: 1000;
+    border-radius: 6px 6px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
   }
 
   .MessageContainerHeader {
     width: 100%;
-    height: 30%;
-    padding-top: 20px;
+    padding: 12px 0;
     background-color: #ff7a00;
-    font-family: "Press Start 2P", monospace;
-    text-align: center;
-  }
-
-  .MessageContainerText {
-    color:#222222;
+    color: #ffffff;
     font-family: "Press Start 2P", monospace;
     text-align: center;
     font-size: 12px;
+  }
+
+  .MessageContainerText {
+    color: #222222;
+    font-family: "Press Start 2P", monospace;
+    text-align: center;
+    font-size: 12px;
+    padding: 12px 16px;
+    word-wrap: break-word;
   }
 
   .previouslyUsedColor
