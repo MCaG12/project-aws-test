@@ -270,11 +270,11 @@
         <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', justifyContent:'space-between'}">
           <div :style="{display:'flex', flexDirection:'row', flex:'2 1 300px', alignItems:'center',gap:'10px'}">
             <div :style="{ width: '20px', height: '20px', backgroundColor:'#00FF00'}"></div>
-            <div class="MessageContainerText">USUARIOS CONECTADOS: {{ usersConnected }}</div>
+            <div class="MessageContainerText" :style="{color: fontColor}">USUARIOS CONECTADOS: {{ usersConnected }}</div>
           </div>
 
           <div :style="{display:'flex', flexDirection:'column', flex:'2 1 300px', alignItems:'center', gap:'30px'}">
-            <div class="MessageContainerText">ULTIMO BACKUP DO CANVAS: {{new Date(lastSnapShotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}}</div>   
+            <div class="MessageContainerText" :style="{color: fontColor}">ULTIMO BACKUP DO CANVAS: {{new Date(lastSnapShotTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}}</div>   
           </div>
         </div>
       </div>
@@ -309,7 +309,7 @@
   >
     <div v-if='toggleMessage == true' class="MessageContainer">
         
-        <div class="MessageContainerHeader">MENSAGEM</div>
+        <div class="MessageContainerHeader" :style="{backgroundColor: headerBackGroundColor}">MENSAGEM</div>
         <p class="MessageContainerText">{{messageText}}</p>
     </div>
 
