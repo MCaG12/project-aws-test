@@ -14,7 +14,7 @@ export async function UpdatePixel(
 ) {
 try 
 {
-    const url = Url + '/update-pixel';
+    const url = Url.backendUrl + '/update-pixel';
 
     const response = await fetch(url, {
     method: 'POST', // Specify the HTTP method
@@ -48,7 +48,6 @@ try
     }
     else
     {
-
         const responseJson = await response.json();
         p_messageText.value = responseJson.message;
         DisplayMessage(p_toggleMessage);

@@ -5,7 +5,7 @@ import {  ref } from 'vue';
 export default 
 async function GetCanvasState() 
 {
-    const url = Url + '/initalize-canvas';
+    const url = Url.backendUrl + '/initalize-canvas';
     let pixelArray = [];
 
     try 

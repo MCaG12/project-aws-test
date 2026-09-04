@@ -8,9 +8,12 @@
   import updateMousePos from './AuxFunctions/updateMousePosition';
   import handleWheel from './AuxFunctions/handleMouseWheelInput';
   import downloadFile from './AuxFunctions/downloadFile';
-import { Url } from './const/url';
+  import { Url } from './const/url';
+  import type i_SSEEvent from './interfaces/i_SSEBroadCastEvent';
+  import { SSEReqCodes } from './const/SSEBroadcastCodes';
  
-  const displayMessageTimeMilliSeconds = 5000; 
+  const usersConnected = ref<number>(0);
+  
   const maxPickedColorsArraySize = 6;
 
   const selectedPixelCoordinates = ref<i_coordinatesPixel>({i_xCord : 0, i_yCord: 0});
@@ -115,8 +118,6 @@ import { Url } from './const/url';
     }
   }
 
-
-
   onMounted(async () => 
   { 
     //initializing client canvas and previously used color array
@@ -125,28 +126,34 @@ import { Url } from './const/url';
     const cacheIsDarkModeOn = localStorage.getItem('isDarkModeOn');
     const cachedPreviouslyUsedColors = localStorage.getItem('userPreviouslyUsedColorsCache');
 
-    if (cachedPreviouslyUsedColors) {
+    if (cachedPreviouslyUsedColors) 
+    {
       const usersPreviousColors = JSON.parse(cachedPreviouslyUsedColors);
       lastUsedColors.value = usersPreviousColors;
-
-      if (Array.isArray(usersPreviousColors) && usersPreviousColors.length > 0) {
+      if (Array.isArray(usersPreviousColors) && usersPreviousColors.length > 0) 
+      {
         lastUsedColors.value = usersPreviousColors;
         selectedPixelColor.value = usersPreviousColors[0];
       }
-    }
+   
 
     const initialDarkMode = cacheIsDarkModeOn !== null ? JSON.parse(cacheIsDarkModeOn) : false;
     isDarkModeOn.value = initialDarkMode;
 
     changePageColorMode();
-  });
+  }});
 
   onMounted(() => { 
-    const eventSource = new EventSource(Url + '/events', { withCredentials: true });
+    const eventSource = new EventSource(Url.backendUrl + '/events', { withCredentials: true });
     eventSource.onmessage = async (event: MessageEvent) => {
-    const pixel: i_canvasPixel = JSON.parse(event.data);
-
-    PaintPixel(pixel, pixelArray.value);
+    console.log(event.data)
+    const parsedSSEevent = JSON.parse(event.data);
+    if(parsedSSEevent.i_SSEBroadcastCode == SSEReqCodes.PAINT_PIXEL_SSE_BROADCAST)
+    {
+      const pixel: i_canvasPixel = parsedSSEevent.any_SSEBroadcastData;
+      console.log(pixel)
+      PaintPixel(pixel, pixelArray.value);
+    }
    
     }
   });
@@ -192,7 +199,7 @@ import { Url } from './const/url';
 
 <template>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <div class="main-header-bar" :style="{ backgroundImage: isDarkModeOn ? 'url(../public/darkModeBackGround.png)' : 'url(../public/lightModeBackGround.png)',
+  <div class="main-header-bar" :style="{ backgroundImage: `url(${isDarkModeOn ? Url.darkModeHeaderUrl : Url.lightModeHeaderUrl})`,
                                          backgroundColor: headerBackGroundColor  }">
       <div class="selected-color-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
         <span class="header-title" :style="{color: fontColor}">COR SELECIONADA</span>
@@ -211,37 +218,45 @@ import { Url } from './const/url';
       </div>
 
       <!-- /**button for the paint pixel */ -->
-      <div :style="{ display: 'flex', flexDirection: 'row', width: '60%', alignItems:'center', justifyContent:'space-evenly'}">
+      <div :style="{display:'flex', flexDirection:'column', width:'50%', height:'100%', alignItems:'center', gap:'30px'}">
+        <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', justifyContent:'space-evenly'}">
+          <div 
+            class="paint-pixel-button" 
+            :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
+            @click="toggleColorMode()" > 
+            {{isDarkModeOn ? 'MODO ESCURO': 'MODO CLARO'}}
+          </div> 
 
-        <div 
+          <div 
+            @click="onUpdatePixelClick()" 
+            :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"
+            class="paint-pixel-button"> 
+            PINTAR PIXEL 
+          </div>
+
+          <div 
+          @click="pickPixelColor()"
           class="paint-pixel-button" 
-          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}" 
-          @click="toggleColorMode()" > 
-          {{isDarkModeOn ? 'MODO ESCURO': 'MODO CLARO'}}
-        </div> 
+          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
+            SELECIONAR COR PIXEL
+          </div> 
 
-        <div 
-          @click="onUpdatePixelClick()" 
-          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"
-          class="paint-pixel-button"> 
-          PINTAR PIXEL 
+          <div 
+          @click="downloadFile()"
+          class="paint-pixel-button" 
+          :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
+            SALVAR IMAGEM CANVAS 
+          </div> 
         </div>
 
-        <div 
-        @click="pickPixelColor()"
-        class="paint-pixel-button" 
-        :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
-          SELECIONAR COR PIXEL
-        </div> 
+        <div :style="{ display: 'flex', flexDirection: 'row', width: '100%', alignItems:'center', gap: '10px'}">
+          <div :style="{ width: '20px', height: '20px', backgroundColor:'#00FF00'}"></div>
+          <div class="MessageContainerText">USUÁRIOS CONECTADOS: {{ usersConnected }}</div>
 
-        <div 
-        @click="downloadFile()"
-        class="paint-pixel-button" 
-        :style="{backgroundColor: buttonBackGroundColor, color: fontColor}"> 
-          SALVAR IMAGEM CANVAS 
-        </div> 
-
+          <div class="MessageContainerText">ULTIMO BACKUP DO CANVAS: {{}} ATRÁS</div>
+        </div>
       </div>
+
 
       <!-- /** displays the users selected coordinates */ -->
       <div class="coordinate-card" :style="{backgroundColor : menuBackGround, borderColor : subMenuBorderColor}">
